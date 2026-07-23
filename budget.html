@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกรายรับ-รายจ่าย (Google Sheets)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">📊 บันทึกรายรับ-รายจ่าย เข้า Google Sheets</h1>
+
+        <!-- ฟอร์มกรอกข้อมูล -->
+        <form id="transactionForm" class="bg-gray-50 p-4 md:p-6 rounded-xl mb-8 border border-gray-200">
+            <h2 class="text-lg font-bold text-gray-700 mb-4">➕ เพิ่มรายการใหม่</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                    <input type="date" id="date" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รายการ</label>
+                    <input type="text" id="description" placeholder="เช่น ค่าผ่อนบ้าน, ค่าไฟ" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+                    <select id="type" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="income">รายรับ (+)</option>
+                        <option value="expense">รายจ่าย (-)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                    <select id="category" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <optgroup label="รายรับ">
+                            <option value="เงินเดือน / รายได้ประจำ">เงินเดือน / รายได้ประจำ</option>
+                            <option value="รายได้เสริม">รายได้เสริม</option>
+                        </optgroup>
+                        <optgroup label="ค่าใช้จ่ายคงที่">
+                            <option value="ค่าผ่อนบ้าน">ค่าผ่อนบ้าน</option>
+                            <option value="ค่าน้ำประปา">ค่าน้ำประปา</option>
+                            <option value="ค่าไฟฟ้า">ค่าไฟฟ้า</option>
+                            <option value="ค่าอินเทอร์เน็ต">ค่าอินเทอร์เน็ต</option>
+                            <option value="ค่าส่วนกลาง">ค่าส่วนกลาง</option>
+                        </optgroup>
+                        <optgroup label="เงินออม & การลงทุน">
+                            <option value="เงินออมประจำเดือน">เงินออมประจำเดือน</option>
+                            <option value="กองทุน / หุ้น">กองทุน / หุ้น</option>
+                        </optgroup>
+                        <optgroup label="ค่าใช้จ่ายผันแปร">
+                            <option value="อาหาร & เครื่องดื่ม">อาหาร & เครื่องดื่ม</option>
+                            <option value="เดินทาง / น้ำมัน">เดินทาง / น้ำมัน</option>
+                            <option value="ของใช้ในบ้าน">ของใช้ในบ้าน</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="amount" step="0.01" min="0" placeholder="0.00" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" id="submitBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold p-2.5 rounded-lg transition duration-200">
+                        ส่งข้อมูลเข้า Google Sheets
+                    </button>
+                </div>
+            </div>
+            <p id="statusMessage" class="mt-3 text-sm font-medium text-center hidden"></p>
+        </form>
+    </div>
+
+    <script>
+        // วาง Web App URL ที่คัดลอกมาจาก Google Apps Script ตรงนี้
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_z40ZUyFE33crwvSvohTq0lZ8HOfKp3gRW8p7-RVYgIvC_PSjzHWu6dc02yzEXsGy/exec';
+
+        document.getElementById('date').valueAsDate = new Date();
+        const form = document.getElementById('transactionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (GOOGLE_SCRIPT_URL === 'วาง_URL_ที่นี่') {
+                alert('กรุณาใส่ Web App URL จาก Google Apps Script ในโค้ดก่อนใช้งานครับ');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'กำลังบันทึกข้อมูล...';
+            statusMessage.classList.add('hidden');
+
+            const data = {
+                date: document.getElementById('date').value,
+                description: document.getElementById('description').value,
+                type: document.getElementById('type').value,
+                category: document.getElementById('category').value,
+                amount: document.getElementById('amount').value
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                statusMessage.innerText = '✅ บันทึกข้อมูลลง Google Sheet สำเร็จ!';
+                statusMessage.className = 'mt-3 text-sm font-medium text-center text-green-600';
+                statusMessage.classList.remove('hidden');
+
+                document.getElementById('description').value = '';
+                document.getElementById('amount').value = '';
+            } catch (error) {
+                statusMessage.innerText = '❌ เกิดข้อผิดพลาดในการส่งข้อมูล';
+                statusMessage.className = 'mt-3 text-sm font-medium text-center text-red-600';
+                statusMessage.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'ส่งข้อมูลเข้า Google Sheets';
+            }
+        });
+    </script>
+</body>
+</html>
