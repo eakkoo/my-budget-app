@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกรายรับ-รายจ่าย (ปลา & เอก)</title>
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="bg-white p-6 rounded-xl shadow-md border-b-4 border-indigo-500 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">📊 ระบบบันทึกรายรับ-รายจ่าย</h1>
+                <p class="text-slate-500 text-sm">สำหรับ ปลา & เอก</p>
+            </div>
+            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2">
+                📥 Export เป็น CSV (Excel)
+            </button>
+        </header>
+
+        <!-- Form Record -->
+        <section class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b pb-2">➕ เพิ่มรายการใหม่</h2>
+            <form id="trackerForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                <!-- วันที่ -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">วันที่</label>
+                    <input type="date" id="transDate" required class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+
+                <!-- ผู้บันทึก -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">ผู้บันทึก</label>
+                    <select id="user" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                        <option value="ปลา">ปลา</option>
+                        <option value="เอก">เอก</option>
+                    </select>
+                </div>
+
+                <!-- ประเภท -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">ประเภท</label>
+                    <select id="type" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                        <option value="รายจ่าย">รายจ่าย (-)</option>
+                        <option value="รายรับ">รายรับ (+)</option>
+                    </select>
+                </div>
+
+                <!-- หมวดหมู่ -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">หมวดหมู่</label>
+                    <select id="category" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                        <option value="อาหาร">อาหาร</option>
+                        <option value="เดินทาง">เดินทาง</option>
+                        <option value="ช้อปปิ้ง">ช้อปปิ้ง</option>
+                        <option value="บันเทิง">บันเทิง</option>
+                        <option value="ค่าน้ำ/ค่าไฟ">ค่าน้ำ/ค่าไฟ</option>
+                        <option value="อื่นๆ" selected>อื่นๆ</option>
+                    </select>
+                </div>
+
+                <!-- จำนวนเงิน -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="amount" step="0.01" min="0" placeholder="0.00" required class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+
+                <!-- หมายเหตุ -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">หมายเหตุ</label>
+                    <input type="text" id="note" placeholder="รายละเอียดเพิ่มเติม" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+
+                <!-- ปุ่มบันทึก -->
+                <div class="md:col-span-2 lg:col-span-3 mt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg shadow transition">
+                        💾 บันทึกรายการ
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Table Display -->
+        <section class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-slate-700">📜 ประวัติรายการบันทึก</h2>
+                <button onclick="clearData()" class="text-xs text-red-500 hover:underline">ล้างข้อมูลทั้งหมด</button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b text-slate-600 text-sm">
+                            <th class="p-3">วันที่</th>
+                            <th class="p-3">ผู้บันทึก</th>
+                            <th class="p-3">ประเภท</th>
+                            <th class="p-3">หมวดหมู่</th>
+                            <th class="p-3 text-right">จำนวนเงิน</th>
+                            <th class="p-3">หมายเหตุ</th>
+                            <th class="p-3 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable" class="divide-y text-slate-700 text-sm">
+                        <!-- รายการจะถูกสร้างผ่าน JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+        document.getElementById('transDate').valueAsDate = new Date();
+
+        // โหลดข้อมูลจาก LocalStorage
+        let records = JSON.parse(localStorage.getItem('expenseRecords')) || [];
+
+        // แสดงผลข้อมูลลงตาราง
+        function renderTable() {
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-400">ยังไม่มีข้อมูลบันทึก</td></tr>`;
+                return;
+            }
+
+            records.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                
+                const typeClass = item.type === 'รายรับ' ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold';
+                const userBadge = item.user === 'ปลา' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700';
+
+                tr.innerHTML = `
+                    <td class="p-3">${item.date}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${userBadge}">${item.user}</span></td>
+                    <td class="p-3 ${typeClass}">${item.type}</td>
+                    <td class="p-3"><span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${item.category}</span></td>
+                    <td class="p-3 text-right ${typeClass}">${Number(item.amount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 text-slate-500">${item.note || '-'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteRecord(${index})" class="text-rose-500 hover:text-rose-700">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // เพิ่มรายการใหม่
+        document.getElementById('trackerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newRecord = {
+                date: document.getElementById('transDate').value,
+                user: document.getElementById('user').value,
+                type: document.getElementById('type').value,
+                category: document.getElementById('category').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                note: document.getElementById('note').value
+            };
+
+            records.unshift(newRecord); // เอาไว้บนสุด
+            saveAndRender();
+
+            // ล้างฟอร์มบางส่วน
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+        });
+
+        // ลบรายการ
+        function deleteRecord(index) {
+            if (confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) {
+                records.splice(index, 1);
+                saveAndRender();
+            }
+        }
+
+        // ล้างข้อมูลทั้งหมด
+        function clearData() {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมด?")) {
+                records = [];
+                saveAndRender();
+            }
+        }
+
+        // บันทึกลง LocalStorage
+        function saveAndRender() {
+            localStorage.setItem('expenseRecords', JSON.stringify(records));
+            renderTable();
+        }
+
+        // ปุ่ม Export เป็นไฟล์ CSV (รองรับภาษาไทยสำหรับ Excel)
+        function exportToCSV() {
+            if (records.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับ Export");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; // ใส่ BOM รองรับภาษาไทยใน Excel
+            csvContent += "วันที่,ผู้บันทึก,ประเภท,หมวดหมู่,จำนวนเงิน,หมายเหตุ\n";
+
+            records.forEach(row => {
+                const amount = row.type === 'รายจ่าย' ? -Math.abs(row.amount) : row.amount;
+                const noteEscaped = `"${(row.note || '').replace(/"/g, '""')}"`;
+                csvContent += `${row.date},${row.user},${row.type},${row.category},${amount},${noteEscaped}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            const today = new Date().toISOString().split('T')[0];
+            link.setAttribute('href', url);
+            link.setAttribute('download', `expense_records_${today}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // เริ่มต้นแสดงข้อมูล
+        renderTable();
+    </script>
+</body>
+</html>
