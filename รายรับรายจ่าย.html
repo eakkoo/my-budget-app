@@ -49,8 +49,8 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">ประเภท</label>
                     <select id="type" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-400 outline-none">
-                        <option value="รายจ่าย">รายจ่าย (-)</option>
-                        <option value="รายรับ">รายรับ (+)</option>
+                        <option value="รายจ่าย">รายจ่าย</option>
+                        <option value="รายรับ">รายรับ</option>
                     </select>
                 </div>
 
@@ -146,7 +146,7 @@
                     <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${userBadge}">${item.user}</span></td>
                     <td class="p-3 ${typeClass}">${item.type}</td>
                     <td class="p-3"><span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${item.category}</span></td>
-                    <td class="p-3 text-right ${typeClass}">${Number(item.amount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 text-right ${typeClass}">${Number(Math.abs(item.amount)).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                     <td class="p-3 text-slate-500">${item.note || '-'}</td>
                     <td class="p-3 text-center">
                         <button onclick="deleteRecord(${index})" class="text-rose-500 hover:text-rose-700">🗑️</button>
@@ -165,7 +165,7 @@
                 user: document.getElementById('user').value,
                 type: document.getElementById('type').value,
                 category: document.getElementById('category').value,
-                amount: parseFloat(document.getElementById('amount').value),
+                amount: Math.abs(parseFloat(document.getElementById('amount').value)), // บันทึกเป็นค่าบวกเสมอ
                 note: document.getElementById('note').value
             };
 
@@ -199,7 +199,7 @@
             renderTable();
         }
 
-        // ปุ่ม Export เป็นไฟล์ CSV (รองรับภาษาไทยสำหรับ Excel)
+        // ปุ่ม Export เป็นไฟล์ CSV (จำนวนเงินเป็นบวกเสมอ ไม่ติดลบ)
         function exportToCSV() {
             if (records.length === 0) {
                 alert("ไม่มีข้อมูลสำหรับ Export");
@@ -210,9 +210,9 @@
             csvContent += "วันที่,ผู้บันทึก,ประเภท,หมวดหมู่,จำนวนเงิน,หมายเหตุ\n";
 
             records.forEach(row => {
-                const amount = row.type === 'รายจ่าย' ? -Math.abs(row.amount) : row.amount;
+                const positiveAmount = Math.abs(row.amount); // ใช้ค่าสัมบูรณ์เพื่อให้เป็นตัวเลขบวกเสมอ
                 const noteEscaped = `"${(row.note || '').replace(/"/g, '""')}"`;
-                csvContent += `${row.date},${row.user},${row.type},${row.category},${amount},${noteEscaped}\n`;
+                csvContent += `${row.date},${row.user},${row.type},${row.category},${positiveAmount},${noteEscaped}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
